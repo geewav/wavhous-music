@@ -325,44 +325,24 @@
             }
         });
 
-        // Share current track via URL
+        // Share button: copy main site URL
         shareBtn.addEventListener('click', () => {
-            if (currentTrackIndex >= 0) {
-                const currentTrack = trackList[currentTrackIndex];
-                const dataTitle = currentTrack.getAttribute('data-title');
-                const trackTitle = dataTitle.split(' - ')[0].trim().replace(/\s+/g, '_').toLowerCase();
-                const shareUrl = `${window.location.origin}${window.location.pathname}?track=${encodeURIComponent(trackTitle)}`;
-                navigator.clipboard.writeText(shareUrl).then(() => {
+            navigator.clipboard.writeText("https://music.wavhous.com")
+                .then(() => {
                     alert('Link copied to clipboard!');
-                }).catch(err => {
+                })
+                .catch(err => {
                     console.error('Failed to copy link:', err);
                     alert('Failed to copy link. Please try again.');
                 });
-            } else {
-                alert('Please select a track to share.');
-            }
         });
-
-        // Load track from URL parameter if present
-        const urlParams = new URLSearchParams(window.location.search);
-        const trackTitleFromUrl = urlParams.get('track');
-        if (trackTitleFromUrl) {
-            const trackIndex = Array.from(trackList).findIndex(track => {
-                const dataTitle = track.getAttribute('data-title');
-                const title = dataTitle.split(' - ')[0].trim().replace(/\s+/g, '_').toLowerCase();
-                return title === trackTitleFromUrl;
-            });
-            if (trackIndex !== -1) {
-                playTrack(trackIndex);
-                currentTrackIndex = trackIndex;
-            }
-        }
 
         // Handle audio loading or playback errors
         audio.addEventListener('error', (e) => {
             console.error('Audio error:', e);
             alert('Error loading audio. Check console for details.');
         });
+        
     });
     </script>
 </body>
