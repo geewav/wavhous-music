@@ -193,6 +193,11 @@
                             </svg>
                         </button>
                         <input type="range" id="progress-bar" value="0" min="0" max="100" step="1">
+                        <button id="share-btn" title="Share">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 16.08C17.24 16.08 16.56 16.38 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12C9 11.76 8.96 11.53 8.91 11.3L15.96 7.19C16.5 7.69 17.21 8 18 8C19.66 8 21 6.66 21 5C21 3.34 19.66 2 18 2C16.34 2 15 3.34 15 5C15 5.24 15.04 5.47 15.09 5.7L8.04 9.81C7.5 9.31 6.79 9 6 9C4.34 9 3 10.34 3 12C3 13.66 4.34 15 6 15C6.79 15 7.5 14.69 8.04 14.19L15.16 18.35C15.11 18.56 15.08 18.78 15.08 19C15.08 20.61 16.39 21.92 18 21.92C19.61 21.92 20.92 20.61 20.92 19C20.92 17.39 19.61 16.08 18 16.08Z" fill="#000000"/>
+                            </svg>
+                        </button>
                     </div>
                     <audio id="audio" preload="none"></audio>
                 </div>
@@ -219,92 +224,146 @@
     </footer>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const audio = document.getElementById('audio');
-            const albumArt = document.getElementById('album-art');
-            const playPauseBtn = document.getElementById('play-pause');
-            const playIcon = document.getElementById('play-icon');
-            const pauseIcon = document.getElementById('pause-icon');
-            const prevBtn = document.getElementById('prev');
-            const nextBtn = document.getElementById('next');
-            const trackList = document.querySelectorAll('.track-list li');
-            const progressBar = document.getElementById('progress-bar');
-            let currentTrackIndex = -1;
+        const audio = document.getElementById('audio');
+        const albumArt = document.getElementById('album-art');
+        const playPauseBtn = document.getElementById('play-pause');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const trackList = document.querySelectorAll('.track-list li');
+        const progressBar = document.getElementById('progress-bar');
+        const shareBtn = document.getElementById('share-btn');
+        let currentTrackIndex = -1; // Track current track, -1 means none selected
 
-            audio.addEventListener('timeupdate', () => {
-                const duration = audio.duration;
-                if (duration) {
-                    progressBar.value = (audio.currentTime / duration) * 100;
-                }
-            });
-
-            progressBar.addEventListener('input', () => {
-                const seekTime = (progressBar.value / 100) * audio.duration;
-                audio.currentTime = seekTime;
-            });
-
-            function playTrack(index) {
-                if (index < 0 || index >= trackList.length) return;
-                trackList.forEach(li => li.classList.remove('active'));
-                trackList[index].classList.add('active');
-                const track = trackList[index];
-                audio.src = track.getAttribute('data-src');
-                albumArt.src = track.getAttribute('data-art');
-                audio.play();
-                playIcon.style.display = 'none';
-                pauseIcon.style.display = 'block';
+        // Update progress bar based on audio playback position
+        audio.addEventListener('timeupdate', () => {
+            const duration = audio.duration;
+            if (duration) {
+                progressBar.value = (audio.currentTime / duration) * 100;
             }
+        });
 
-            trackList.forEach((track, index) => {
-                track.addEventListener('click', () => {
-                    playTrack(index);
-                    currentTrackIndex = index;
-                });
+        // Seek audio when user adjusts progress bar
+        progressBar.addEventListener('input', () => {
+            const seekTime = (progressBar.value / 100) * audio.duration;
+            audio.currentTime = seekTime;
+        });
+
+        // Function to play a track by index
+        function playTrack(index) {
+            if (index < 0 || index >= trackList.length) return; // Prevent out-of-bounds
+            trackList.forEach(li => li.classList.remove('active')); // Remove active class from all tracks
+            trackList[index].classList.add('active'); // Highlight selected track
+            const track = trackList[index];
+            audio.src = track.getAttribute('data-src'); // Set audio source
+            albumArt.src = track.getAttribute('data-art'); // Update album art
+            audio.play().catch(error => {
+                console.error('Error playing audio:', error); // Log playback errors
+                alert('Failed to play track. Check console for details.');
             });
+            playIcon.style.display = 'none'; // Show pause icon
+            pauseIcon.style.display = 'block';
+        }
 
-            playPauseBtn.addEventListener('click', () => {
-                if (currentTrackIndex === -1) {
-                    if (trackList.length > 0) {
-                        playTrack(0);
-                        currentTrackIndex = 0;
-                    }
-                } else {
-                    if (audio.paused) {
-                        audio.play();
-                        playIcon.style.display = 'none';
-                        pauseIcon.style.display = 'block';
-                    } else {
-                        audio.pause();
-                        playIcon.style.display = 'block';
-                        pauseIcon.style.display = 'none';
-                    }
+        // Add click handlers to each track in the list
+        trackList.forEach((track, index) => {
+            track.addEventListener('click', () => {
+                playTrack(index);
+                currentTrackIndex = index; // Update current track index
+            });
+        });
+
+        // Toggle play/pause or start first track if none selected
+        playPauseBtn.addEventListener('click', () => {
+            if (currentTrackIndex === -1) {
+                if (trackList.length > 0) {
+                    playTrack(0); // Play first track if none selected
+                    currentTrackIndex = 0;
                 }
-            });
-
-            prevBtn.addEventListener('click', () => {
-                if (currentTrackIndex > 0) {
-                    playTrack(currentTrackIndex - 1);
-                    currentTrackIndex--;
-                }
-            });
-
-            nextBtn.addEventListener('click', () => {
-                if (currentTrackIndex < trackList.length - 1) {
-                    playTrack(currentTrackIndex + 1);
-                    currentTrackIndex++;
-                }
-            });
-
-            audio.addEventListener('ended', () => {
-                if (currentTrackIndex < trackList.length - 1) {
-                    playTrack(currentTrackIndex + 1);
-                    currentTrackIndex++;
+            } else {
+                if (audio.paused) {
+                    audio.play().catch(error => {
+                        console.error('Error playing audio:', error);
+                        alert('Failed to play track. Check console for details.');
+                    });
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
                 } else {
                     audio.pause();
                     playIcon.style.display = 'block';
                     pauseIcon.style.display = 'none';
                 }
-            });
+            }
         });
+
+        // Play previous track if available
+        prevBtn.addEventListener('click', () => {
+            if (currentTrackIndex > 0) {
+                playTrack(currentTrackIndex - 1);
+                currentTrackIndex--;
+            }
+        });
+
+        // Play next track if available
+        nextBtn.addEventListener('click', () => {
+            if (currentTrackIndex < trackList.length - 1) {
+                playTrack(currentTrackIndex + 1);
+                currentTrackIndex++;
+            }
+        });
+
+        // Handle track end: play next or stop
+        audio.addEventListener('ended', () => {
+            if (currentTrackIndex < trackList.length - 1) {
+                playTrack(currentTrackIndex + 1);
+                currentTrackIndex++;
+            } else {
+                audio.pause();
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+            }
+        });
+
+        // Share current track via URL
+        shareBtn.addEventListener('click', () => {
+            if (currentTrackIndex >= 0) {
+                const currentTrack = trackList[currentTrackIndex];
+                const dataTitle = currentTrack.getAttribute('data-title');
+                const trackTitle = dataTitle.split(' - ')[0].trim().replace(/\s+/g, '_').toLowerCase();
+                const shareUrl = `${window.location.origin}${window.location.pathname}?track=${encodeURIComponent(trackTitle)}`;
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy link:', err);
+                    alert('Failed to copy link. Please try again.');
+                });
+            } else {
+                alert('Please select a track to share.');
+            }
+        });
+
+        // Load track from URL parameter if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const trackTitleFromUrl = urlParams.get('track');
+        if (trackTitleFromUrl) {
+            const trackIndex = Array.from(trackList).findIndex(track => {
+                const dataTitle = track.getAttribute('data-title');
+                const title = dataTitle.split(' - ')[0].trim().replace(/\s+/g, '_').toLowerCase();
+                return title === trackTitleFromUrl;
+            });
+            if (trackIndex !== -1) {
+                playTrack(trackIndex);
+                currentTrackIndex = trackIndex;
+            }
+        }
+
+        // Handle audio loading or playback errors
+        audio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+            alert('Error loading audio. Check console for details.');
+        });
+    });
     </script>
 </body>
 </html>
